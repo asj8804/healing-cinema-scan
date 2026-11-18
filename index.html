@@ -146,7 +146,7 @@ function authErr(e) {
 }
 function logout() { stopCam(); S.token = null; store('hcs_token', null); showLogin(); }
 function showLogin() { $('loginBox').hidden = false; $('mainBox').hidden = true; $('topBtns').hidden = true; setTimeout(function () { $('pinIn').focus(); }, 50); }
-function showMain() { $('loginBox').hidden = true; $('mainBox').hidden = false; $('topBtns').hidden = false; $('listLink').href = API + '?page=checkin'; }
+function showMain() { $('loginBox').hidden = true; $('mainBox').hidden = false; $('topBtns').hidden = false; $('listLink').href = 'https://asj8804.github.io/healing-cinema/?page=checkin'; }
 
 $('loginBtn').onclick = function () {
   var b = this, pin = $('pinIn').value; b.disabled = true; b.textContent = '확인 중…';
