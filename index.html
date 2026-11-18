@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#121327">
+<meta name="robots" content="noindex">
+<title>힐링시네마 입장 스캔</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+/* 상영관 입구용: 어두운 객석 톤, 결과는 멀리서도 보이게 크게 */
+:root{
+  --ink:#121327; --panel:#1c1e39; --panel-2:#262949; --line:#393c66;
+  --text:#f4f0e6; --muted:#a9a7c7; --gold:#f5c45e; --coral:#ff7b6b; --mint:#6fd6b3;
+  --danger:#ff6b81; --warn:#ffb547;
+  --display:'Black Han Sans','Noto Sans KR',sans-serif;
+  --body:'Noto Sans KR',system-ui,-apple-system,'Apple SD Gothic Neo',sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--ink);color:var(--text);font-family:var(--body);font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased;
+  padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+[hidden]{display:none!important}
+.wrap{max-width:560px;margin:0 auto;padding:12px 16px 32px;display:flex;flex-direction:column;gap:12px}
+header{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.brand small{display:block;font-size:10px;letter-spacing:.3em;color:var(--gold);font-weight:700}
+.brand b{font-family:var(--display);font-weight:400;font-size:22px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-size:13px;color:var(--muted)}
+.field input,.field select{background:#14152b;border:1px solid var(--line);border-radius:10px;padding:11px 12px;width:100%}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border-radius:12px;padding:12px 16px;border:1px solid var(--line);background:var(--panel-2);cursor:pointer;font-weight:700}
+.btn.gold{background:var(--gold);border-color:var(--gold);color:#1a1530}
+.btn.ghost{background:transparent}
+.btn.sm{padding:7px 11px;font-size:13px;border-radius:9px}
+.btn:disabled{opacity:.45}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.muted{color:var(--muted)} .small{font-size:13px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.stat{background:var(--panel-2);border-radius:12px;padding:8px 10px}
+.stat b{display:block;font-size:22px;font-variant-numeric:tabular-nums;line-height:1.2}
+.stat span{font-size:11px;color:var(--muted)}
+.cam{position:relative;background:#000;border-radius:16px;overflow:hidden;aspect-ratio:4/3;max-height:40vh;margin:0 auto;width:100%;border:4px solid var(--line);transition:border-color .15s}
+.cam video{width:100%;height:100%;object-fit:cover;display:block}
+.cam .aim{position:absolute;inset:12% 24%;border:3px solid rgba(245,196,94,.9);border-radius:18px;box-shadow:0 0 0 999px rgba(0,0,0,.28)}
+.cam .idle{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center;padding:20px}
+.cam.ok{border-color:var(--mint)} .cam.warn{border-color:var(--warn)} .cam.bad{border-color:var(--danger)}
+.flash{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .2s}
+.cam.ok .flash{background:rgba(111,214,179,.35);opacity:1} .cam.warn .flash{background:rgba(255,181,71,.3);opacity:1} .cam.bad .flash{background:rgba(255,107,129,.3);opacity:1}
+.result{border-radius:16px;padding:14px 16px;border:2px solid var(--line);min-height:96px;display:flex;flex-direction:column;gap:4px;justify-content:center}
+.result .big{font-family:var(--display);font-size:28px;line-height:1.2}
+.result.ok{border-color:var(--mint);background:rgba(111,214,179,.12)} .result.ok .big{color:var(--mint)}
+.result.warn{border-color:var(--warn);background:rgba(255,181,71,.12)} .result.warn .big{color:var(--warn)}
+.result.bad{border-color:var(--danger);background:rgba(255,107,129,.12)} .result.bad .big{color:var(--danger)}
+.chips{display:inline-flex;gap:5px;flex-wrap:wrap}
+.chip{background:var(--gold);color:#1a1530;border-radius:7px;padding:1px 8px;font-weight:700;font-size:14px;font-variant-numeric:tabular-nums}
+.gift{border-left:4px solid var(--gold);background:var(--panel-2);border-radius:10px;padding:10px 12px;margin-top:6px}
+.log{display:flex;flex-direction:column;gap:6px;font-size:14px}
+.log div{display:flex;justify-content:space-between;gap:8px;border-bottom:1px solid var(--line);padding-bottom:6px}
+.pill{font-size:12px;font-weight:700;padding:1px 8px;border-radius:999px;border:1px solid currentColor;white-space:nowrap}
+.pill.ok{color:var(--mint)} .pill.warn{color:var(--warn)} .pill.bad{color:var(--danger)}
+#toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:9;background:#2b2e57;border:1px solid var(--line);border-radius:12px;padding:10px 16px;max-width:90vw}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand"><small>HEALING CINEMA</small><b>입장 스캔</b></div>
+    <div class="row" id="topBtns" hidden>
+      <a class="btn sm ghost" id="listLink" target="_blank" rel="noopener">명단 보기</a>
+      <button class="btn sm ghost" type="button" id="logoutBtn">나가기</button>
+    </div>
+  </header>
+
+  <section class="card" id="loginBox" hidden>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div><b style="font-size:18px">안내자 PIN을 입력해 주세요</b><div class="small muted">한 번 들어오면 이 휴대폰에서 6시간 동안 유지돼요.</div></div>
+      <div class="field"><label for="pinIn">PIN (숫자 4~8자리)</label><input id="pinIn" type="password" inputmode="numeric" maxlength="8" autocomplete="current-password"></div>
+      <button class="btn gold" type="button" id="loginBtn">들어가기</button>
+    </div>
+  </section>
+
+  <section id="mainBox" hidden style="display:flex;flex-direction:column;gap:12px">
+    <div class="field"><label for="showSel">상영 선택</label><select id="showSel"></select></div>
+    <div class="stats">
+      <div class="stat"><b id="stChecked">-</b><span>입장 좌석</span></div>
+      <div class="stat"><b id="stSeats">-</b><span>예매 좌석</span></div>
+      <div class="stat"><b id="stLeft">-</b><span>아직 안 온 좌석</span></div>
+    </div>
+    <div class="cam" id="cam">
+      <video id="video" muted playsinline autoplay></video>
+      <div class="aim" id="aim" hidden></div>
+      <div class="flash"></div>
+      <div class="idle" id="idle">
+        <div class="muted">버튼을 누르면 카메라가 켜지고<br>QR을 비추는 즉시 입장 처리돼요.</div>
+        <button class="btn gold" type="button" id="camBtn" style="font-size:18px;padding:14px 22px">카메라 켜기</button>
+      </div>
+    </div>
+    <div class="result" id="result"><div class="muted">관객의 티켓 QR을 노란 네모 안에 비춰 주세요.</div></div>
+    <div class="row">
+      <input id="codeIn" placeholder="예매번호 직접 입력" autocomplete="off" autocapitalize="characters" style="flex:1;min-width:150px;background:#14152b;border:1px solid var(--line);border-radius:10px;padding:10px 12px">
+      <button class="btn" type="button" id="codeBtn">확인</button>
+      <button class="btn ghost" type="button" id="stopBtn" hidden>카메라 끄기</button>
+    </div>
+    <div class="card">
+      <div class="row" style="justify-content:space-between;margin-bottom:8px"><b>방금 확인한 관객</b><span class="small muted">최근 10명</span></div>
+      <div class="log" id="log"><span class="small muted">아직 없어요.</span></div>
+    </div>
+  </section>
+</div>
+<div id="toast" hidden></div>
+
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+<script>
+(function () {
+'use strict';
+// ▼ 구글 Apps Script 웹 앱 주소 (예매 페이지와 같은 주소)
+var API = 'https://script.google.com/macros/s/AKfycbxMPVYu5s4h1SP72cvYJ65YhLrb5wyDPIv62ikY-cb4QCvfaRD1MlCr0iQwb_mQ2t6IUA/exec';
+
+var $ = function (id) { return document.getElementById(id); };
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+function store(k, v) { try { if (v === undefined) return localStorage.getItem(k); if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) { return null; } }
+var toastT;
+function toast(m) { var t = $('toast'); t.textContent = m; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(function () { t.hidden = true; }, 3500); }
+
+// 구글에 요청: 쿠키 없이 보내서 '여러 구글 계정 로그인' 문제를 피함
+function api(fn) {
+  var args = Array.prototype.slice.call(arguments, 1);
+  return fetch(API, { method: 'POST', body: JSON.stringify({ fn: fn, args: args }), headers: { 'Content-Type': 'text/plain;charset=utf-8' }, credentials: 'omit', redirect: 'follow' })
+    .then(function (r) { if (!r.ok) throw new Error('서버 응답 오류 (' + r.status + ')'); return r.json(); })
+    .then(function (o) { if (!o.ok) throw new Error(o.error || '알 수 없는 오류'); return o.data; })
+    .catch(function (e) { if (e instanceof TypeError) throw new Error('인터넷 연결을 확인해 주세요.'); throw e; });
+}
+
+var S = { token: store('hcs_token'), movieId: store('hcs_movie'), movies: [], data: null, busy: false, last: '', lastAt: 0, log: [] };
+
+function authErr(e) {
+  var m = (e && e.message) || String(e);
+  if (/만료|PIN이 올바르지/.test(m)) { logout(); }
+  toast(m);
+}
+function logout() { stopCam(); S.token = null; store('hcs_token', null); showLogin(); }
+function showLogin() { $('loginBox').hidden = false; $('mainBox').hidden = true; $('topBtns').hidden = true; setTimeout(function () { $('pinIn').focus(); }, 50); }
+function showMain() { $('loginBox').hidden = true; $('mainBox').hidden = false; $('topBtns').hidden = false; $('listLink').href = API + '?page=checkin'; }
+
+$('loginBtn').onclick = function () {
+  var b = this, pin = $('pinIn').value; b.disabled = true; b.textContent = '확인 중…';
+  api('login', pin).then(function (r) {
+    if (r.needsSetup) throw new Error('먼저 예매 페이지의 [관리자]에서 PIN을 정해 주세요.');
+    S.token = r.token; store('hcs_token', r.token); $('pinIn').value = ''; return init();
+  }).catch(function (e) { toast(e.message); }).then(function () { b.disabled = false; b.textContent = '들어가기'; });
+};
+$('pinIn').onkeydown = function (e) { if (e.key === 'Enter') $('loginBtn').click(); };
+$('logoutBtn').onclick = logout;
+
+function init() {
+  return api('staffInit', S.token).then(function (r) {
+    S.movies = r.movies; showMain();
+    if (!S.movies.some(function (m) { return m.id === S.movieId; })) {
+      var now = Date.now(), pick = S.movies[S.movies.length - 1];
+      for (var i = 0; i < S.movies.length; i++) { var m = S.movies[i]; if (new Date(m.date + 'T' + m.time + ':00+09:00').getTime() + 3 * 3600000 > now) { pick = m; break; } }
+      S.movieId = pick ? pick.id : null;
+    }
+    $('showSel').innerHTML = S.movies.map(function (m) { return '<option value="' + esc(m.id) + '"' + (m.id === S.movieId ? ' selected' : '') + '>' + esc(m.date + ' ' + m.time + ' · ' + m.title) + '</option>'; }).join('');
+    return refresh();
+  }).catch(authErr);
+}
+$('showSel').onchange = function () { S.movieId = this.value; store('hcs_movie', this.value); refresh(); };
+
+function refresh() {
+  if (!S.movieId) return Promise.resolve();
+  return api('staffGetShow', S.token, S.movieId).then(function (r) {
+    S.data = r;
+    $('stChecked').textContent = r.stats.checkedSeats;
+    $('stSeats').textContent = r.stats.seats;
+    $('stLeft').textContent = r.stats.seats - r.stats.checkedSeats;
+  }).catch(authErr);
+}
+setInterval(function () { if (S.token && !$('mainBox').hidden && !S.busy) refresh(); }, 30000);
+
+/* ---------------- 카메라 ---------------- */
+var stream = null, raf = 0, canvas = document.createElement('canvas'), ctx = canvas.getContext('2d', { willReadFrequently: true });
+var detector = null;
+try { if ('BarcodeDetector' in window) detector = new BarcodeDetector({ formats: ['qr_code'] }); } catch (e) { detector = null; }
+
+$('camBtn').onclick = startCam;
+$('stopBtn').onclick = stopCam;
+function startCam() {
+  unlockAudio();
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { toast('이 브라우저는 카메라를 지원하지 않아요. 사파리나 크롬으로 열어 주세요.'); return; }
+  navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false })
+    .then(function (s) {
+      stream = s; var v = $('video'); v.srcObject = s; v.play();
+      $('idle').hidden = true; $('aim').hidden = false; $('stopBtn').hidden = false;
+      raf = requestAnimationFrame(tick);
+    }).catch(function (e) {
+      toast(e && e.name === 'NotAllowedError' ? '카메라 권한이 꺼져 있어요. 주소창의 설정에서 카메라를 허용해 주세요.' : '카메라를 켤 수 없어요: ' + (e && e.name || e));
+    });
+}
+function stopCam() {
+  cancelAnimationFrame(raf);
+  if (stream) stream.getTracks().forEach(function (t) { t.stop(); });
+  stream = null; $('video').srcObject = null; $('idle').hidden = false; $('aim').hidden = true; $('stopBtn').hidden = true;
+}
+var lastScan = 0, decoding = false;
+function tick(ts) {
+  if (!stream) return;
+  raf = requestAnimationFrame(tick);
+  var v = $('video');
+  if (S.busy || decoding || ts - lastScan < 140 || v.readyState < 2 || !v.videoWidth) return;
+  lastScan = ts;
+  if (detector) {
+    decoding = true;
+    detector.detect(v).then(function (codes) { decoding = false; if (codes && codes[0]) found(codes[0].rawValue); })
+      .catch(function () { decoding = false; detector = null; });
+    return;
+  }
+  if (!window.jsQR) return;
+  // 가운데 부분만 잘라서 빠르게 판독
+  var vw = v.videoWidth, vh = v.videoHeight, side = Math.min(vw, vh) * 0.8, sx = (vw - side) / 2, sy = (vh - side) / 2, size = 480;
+  canvas.width = size; canvas.height = size;
+  ctx.drawImage(v, sx, sy, side, side, 0, 0, size, size);
+  var r = jsQR(ctx.getImageData(0, 0, size, size).data, size, size, { inversionAttempts: 'dontInvert' });
+  if (r && r.data) found(r.data);
+}
+function found(text) {
+  var code = parseCode(text); if (!code) return;
+  // 같은 QR이 화면에 계속 보이면 다시 처리하지 않음(초록 결과가 '이미 입장'으로 덮이지 않게)
+  if (code === S.last && Date.now() - S.lastAt < 15000) { S.lastAt = Date.now(); return; }
+  S.last = code; S.lastAt = Date.now();
+  checkIn(code);
+}
+function parseCode(t) {
+  t = String(t || '').trim();
+  var m = t.match(/[?&]code=([A-Za-z0-9-]+)/); if (m) t = m[1];
+  var c = t.toUpperCase().replace(/[^A-Z0-9]/g, '');
+  if (c.length === 8 && c.indexOf('HC') === 0) c = c.slice(2);
+  return c.length >= 4 && c.length <= 10 ? c : '';
+}
+
+/* ---------------- 입장 처리 ---------------- */
+$('codeBtn').onclick = function () { var c = parseCode($('codeIn').value); if (!c) return toast('예매번호를 확인해 주세요.'); $('codeIn').value = ''; checkIn(c); };
+$('codeIn').onkeydown = function (e) { if (e.key === 'Enter') $('codeBtn').click(); };
+
+function checkIn(code) {
+  if (S.busy) return;
+  S.busy = true; showResult({ status: 'loading', code: code });
+  api('staffCheckIn', S.token, code, S.movieId).then(function (r) {
+    S.busy = false; showResult(r); addLog(r); beep(r.status === 'ok' ? 'ok' : (r.status === 'already' ? 'warn' : 'bad'));
+    refresh();
+  }).catch(function (e) { S.busy = false; showResult({ status: 'error', msg: e.message }); beep('bad'); authErr(e); });
+}
+var flashT;
+function showResult(r) {
+  var el = $('result'), cam = $('cam'), b = r.booking, cls = '', html = '';
+  var who = b ? '<div><b style="font-size:20px">' + esc(b.name) + '</b> <span class="muted">' + esc(b.group) + ' · ' + b.count + '명</span></div><div class="chips">' + b.seats.map(function (s) { return '<span class="chip">' + esc(s) + '</span>'; }).join('') + '</div>' : '';
+  if (r.status === 'loading') { html = '<div class="big" style="color:var(--gold)">확인 중…</div><div class="small muted">' + esc(r.code) + '</div>'; }
+  else if (r.status === 'ok') { cls = 'ok'; html = '<div class="big">입장 확인 완료</div>' + who + '<div class="small">힐링포인트 +' + r.added + ' → 누적 ' + r.total + '점</div>' +
+      (r.giftReady ? '<div class="gift"><b>사은품 지급 대상!</b> (' + esc(r.giftName) + ')<br><button class="btn sm gold" type="button" data-gift="' + esc(r.memberKey) + '" style="margin-top:6px">사은품 지급 처리</button></div>' : '') +
+      '<div><button class="btn sm ghost" type="button" data-undo="' + esc(b.code) + '" style="margin-top:4px">잘못 찍었어요 (되돌리기)</button></div>'; }
+  else if (r.status === 'already') { cls = 'warn'; html = '<div class="big">이미 입장했어요</div>' + who + '<div class="small">입장 시각 ' + esc(String(b.checkedAt).slice(11, 16)) + '</div>'; }
+  else if (r.status === 'cancelled') { cls = 'bad'; html = '<div class="big">취소된 예매예요</div>' + who; }
+  else if (r.status === 'othershow') { cls = 'bad'; html = '<div class="big">다른 상영 예매예요</div>' + who + '<div class="small">' + esc(b.movie ? b.movie.title + ' · ' + b.movie.date + ' ' + b.movie.time : '') + '</div>'; }
+  else if (r.status === 'notfound') { cls = 'bad'; html = '<div class="big">예매를 찾을 수 없어요</div><div class="small">읽은 번호: ' + esc(r.code) + ' · [명단 보기]에서 이름으로 찾아 주세요.</div>'; }
+  else { cls = 'bad'; html = '<div class="big">확인하지 못했어요</div><div class="small">' + esc(r.msg) + '</div>'; }
+  el.className = 'result ' + cls; el.innerHTML = html;
+  cam.classList.remove('ok', 'warn', 'bad'); if (cls) cam.classList.add(cls);
+  clearTimeout(flashT); flashT = setTimeout(function () { cam.classList.remove('ok', 'warn', 'bad'); }, 1500);
+}
+function addLog(r) {
+  if (!r.booking) return;
+  var b = r.booking, lab = { ok: ['ok', '입장'], already: ['warn', '중복'], cancelled: ['bad', '취소됨'], othershow: ['bad', '다른 회차'] }[r.status] || ['bad', r.status];
+  S.log.unshift('<div><span><b>' + esc(b.name) + '</b> <span class="muted small">' + esc(b.seats.join(' ')) + '</span></span><span class="pill ' + lab[0] + '">' + lab[1] + '</span></div>');
+  S.log = S.log.slice(0, 10); $('log').innerHTML = S.log.join('');
+}
+document.addEventListener('click', function (e) {
+  var g = e.target.closest('[data-gift]'), u = e.target.closest('[data-undo]');
+  if (g) {
+    g.disabled = true;
+    api('giveGift', S.token, g.dataset.gift).then(function (r) { g.parentNode.innerHTML = '<b>사은품 지급 완료</b> · 남은 포인트 ' + r.total + '점'; })
+      .catch(function (err) { g.disabled = false; authErr(err); });
+  } else if (u) {
+    u.disabled = true;
+    api('staffUndoCheckIn', S.token, u.dataset.undo).then(function () { $('result').className = 'result'; $('result').innerHTML = '<div class="muted">입장확인을 되돌렸어요. 다시 찍을 수 있어요.</div>'; S.last = ''; refresh(); })
+      .catch(function (err) { u.disabled = false; authErr(err); });
+  }
+});
+
+/* ---------------- 소리 ---------------- */
+var ac = null;
+function unlockAudio() { try { ac = ac || new (window.AudioContext || window.webkitAudioContext)(); if (ac.state === 'suspended') ac.resume(); } catch (e) { } }
+function beep(kind) {
+  try {
+    if (!ac) return;
+    var tones = kind === 'ok' ? [880, 1320] : (kind === 'warn' ? [660, 660] : [240, 200]);
+    tones.forEach(function (f, i) {
+      var o = ac.createOscillator(), g = ac.createGain(), t = ac.currentTime + i * 0.13;
+      o.frequency.value = f; g.gain.setValueAtTime(0.18, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
+      o.connect(g); g.connect(ac.destination); o.start(t); o.stop(t + 0.12);
+    });
+    if (navigator.vibrate) navigator.vibrate(kind === 'ok' ? 80 : [90, 60, 90]);
+  } catch (e) { }
+}
+
+/* ---------------- 시작 ---------------- */
+if (S.token) init(); else showLogin();
+})();
+</script>
+</body>
+</html>
